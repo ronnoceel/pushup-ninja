@@ -100,7 +100,7 @@
                         if(started && (time - prev_time > 1000)){
                             count++;
                             this.vibrate('short');
-                            $('h1').html(count);
+                            $('#count').html(count);
                             prev_time = time;
                         } else if(started && (time - prev_time > 500)){
                             console.log("Too fast");
