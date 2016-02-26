@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>PushupNinja</title>
+        <script src="https://code.jquery.com/jquery-2.2.0.js"></script>
+        <script type="text/javascript" src="myo.js"></script>
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+    <body onload="main()">
+
+        <!--<h1>PushupNinja</h1>
+        <img id = "logo" alt="logo" src = "logo.png"/>-->
+        <h1 id = 'title'>Get ready to begin</h1>
+        <h1 id = 'count'></h1>
+        <h1 id = "time">10</h1>
+        <a id = 'next' href="calibrate.html">Re-calibrate</a>
+        <script type="text/javascript">
+            var queue = Array.apply(null, new Array(150)).map(function() {return 0;});
+            var total_push_ups = 0;
+            var states = {
+                UP : 0,
+                DOWN : 1,
+                REST : 2
+            }
+            var state = states.UP;
+            var count = 0;
+
+            var connected = false;
+            var started = false;
+
+            var prev_time = Date.now();
+
+            const THRESHOLD = Math.floor(sessionStorage.getItem('THRESHOLD'));
+
+            function main(){
+
+            }
+
+            //Start talking with Myo Connect
+            Myo.connect('com.ronnoceel.myoapp');
+
+            Myo.on('connected', function(){
+                connected = true;
+                counter = 10;
+                context = this;
+                id = setInterval(function() {
+                    counter--;
+                    if(counter < 0) {
+                        $('#title').html("Push Up Count");
+                        $('#time').html("");
+                        $('#count').html("0");
+                        context.streamEMG(true);
+                        context.lock();
+                        clearInterval(id);
+                    } else {
+                        $('#time').html(counter);
+                    }
+                }, 1000);
+            });
+
+            Myo.on('disconnect', function(){
+                this.unlock();
+                this.streamEMG(false);
+            });
+
+            Myo.on('emg', function(data){
+                var data_sum = data.map(Math.abs).reduce(add,0);
+
+                queue.push(data_sum);
+                var value = queue.shift();
+                var queue_sum = queue.reduce(add,0);
+
+                average = queue_sum / queue.length;
+
+                if (average < THRESHOLD){
+                    new_state = states.UP;
+                } else {
+                    new_state = states.DOWN;
+                }
+
+                time = Date.now();
+                if(started && (time - prev_time > 5000)){
+                    this.vibrate('long');
+                    console.log("more than five seconds between ups... end");
+                    localStorage.setItem("timestamp", Date.now());
+                    localStorage.setItem("count", count);
+                    $('#time').html('Continue on to results');
+                    $('#count').html('You got '+count);
+                    $('a').attr("href", "results.html");
+                    $('a').html('results');
+                    this.streamEMG(false);
+                    //prevents us from double counting state changes
+                }
+
+                //This is an xor condition
+                if ( state ? !new_state : new_state ) {
+                    if (state == states.DOWN) {
+                        state = states.UP
+
+                        if(started && (time - prev_time > 1000)){
+                            count++;
+                            this.vibrate('short');
+                            $('h1').html(count);
+                            prev_time = time;
+                        } else if(started && (time - prev_time > 500)){
+                            console.log("Too fast");
+                        }
+                    } else {
+                        state = states.DOWN;
+                        if(!started){
+                            started = true;
+                            prev_time = Date.now();
+                            console.log("Started!");
+                        }
+                    }
+                }
+            });
+            function add(a, b) {
+                return a + b;
+            }
+        </script>
+    </body>
+</html>

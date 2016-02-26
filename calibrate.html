@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>PushupNinja</title>
+        <script src="https://code.jquery.com/jquery-2.2.0.js"></script>
+        <script src="http://cdnjs.cloudflare.com/ajax/libs/mathjs/2.7.0/math.js"></script>
+        <script type="text/javascript" src="myo.js"></script>
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+    <body>
+        <h2>Let's calibrate your Myo</h2>
+        <h3 id ="connect" >Connect Myo</h3>
+
+        <script>
+            var data_set = Array.apply(null, new Array(150)).map(function() {return 0;});
+            var averages = Array.apply(null, new Array(150)).map(function() {return 0;});
+
+            var states = {
+                UP : 0,
+                DOWN : 1,
+                NEXT : 2
+            }
+            var task, up_val, down_val, prev_time, added_one = false, added_two = false, max = 0;
+
+            Myo.connect('com.ronnoceel.myoapp');
+
+            Myo.on('connected', function(){
+                $('h3').html('Connected!');
+                this.vibrate('short');
+                this.vibrate('short');
+                $('body').append('<h3 id = "up_position">Get into pushup position</h3>');
+                task = states.UP;
+                this.streamEMG(true);
+            });
+
+            Myo.on('disconnected', function(){
+                $('h3').html('Disconnected!');
+            })
+
+            Myo.on('emg', function(data){
+                var data_sum = data.map(Math.abs).reduce(add,0);
+                data_set.push(data_sum);
+                var value = data_set.shift();
+
+                var average = data_set.reduce(add,0)/data_set.length;
+                //console.log(average);
+
+                averages.push(average);
+                var value = averages.shift();
+
+                if(task == states.UP){
+                    //console.log(math.std(averages));
+                    if(math.std(averages) < 10){
+                        if(prev_time === undefined)
+                        {
+                            this.vibrate('short');
+                            $('#up_position').html('Hold it there for 3..');
+                            prev_time = Date.now();
+                        } else if(Date.now() - prev_time > 3000){
+                            up_val = math.mean(averages);
+                            $('#up_position').html(Math.floor(up_val)+': Up position calibrated');
+                            $('body').append('<h3 id = "down_position">Lower into bottom position then come back to top position</h3>');
+                            task = states.DOWN;
+                        } else if(Date.now() - prev_time > 2000 && !added_one){
+                            $('#up_position').append('1..');
+                            added_one = true;
+                            this.vibrate('short');
+
+                        } else if(Date.now() - prev_time > 1000 && !added_two){
+                            $('#up_position').append('2..');
+                            added_two = true;
+                            this.vibrate('short');
+
+                        }
+                    } else {
+                        prev_time = undefined;
+                        added_one = false;
+                        added_two = false;
+                        $('#up_position').html('Get into pushup position');
+                    }
+                } else if (task == states.DOWN){
+                    if(average >= up_val){
+                        if(average > max){
+                            max = average;
+                            //console.log('Max: ' + max);
+                        }
+                    } else if (max > up_val+10){
+                        this.streamEMG(false);
+                        this.vibrate('long');
+                        down_val = max;
+                        $('#down_position').html(Math.floor(down_val)+': Myo calibrated. Please proceed to the activity');
+                        //console.log(down_val);
+                        sessionStorage.setItem('THRESHOLD', Math.floor(down_val-up_val)*0.75+up_val);
+                        $('body').append('<a href = "counter.html" id = "next">Play game!<a>')
+                    } else {
+                        //console.log("test");
+                    }
+                }
+            })
+
+            function add(a, b) {
+                return a + b;
+            }
+
+        </script>
+
+    </body>
+</html>

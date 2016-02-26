@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Graph tester</title>
+		<script content-type = "text/javascript" src = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.js"></script>
+		<script src = "https://code.jquery.com/jquery-2.2.0.js"></script>
+		<link rel="stylesheet" type="text/css" href = "style.css">
+	</head>
+	<body onload = "main()">
+
+		<h1>Result</h1>
+
+		<canvas id="historyChart" width="500" height="400"></canvas>
+
+		<canvas id="performanceChart" width="500" height="400"></canvas>
+
+		<a href= "index.html">home</a>
+
+			<!--Data displayed is static, and is not yet implemented-->
+
+
+		<script>
+			function main(){
+				// History
+				var dates = ["Mon", "Tue", "Wed", "Thur", "Fri", "Sat", "S"]; // Inputs
+				var daily_push_ups = [15, 20, 25, 28, 31, 35, 36]; // Inputs
+				/*var dates = localStorage.getItem("sessions");
+				var daily_push_ups = localStorage.getItem("counts");
+
+
+				var time = sessionStorage.getItem("timestamp");*/
+				var result = sessionStorage.getItem("count");
+
+/*
+				if (dates == null){
+					console.log("this");
+					dates = [].push(time);
+				} else {
+					dates.push(time);
+
+				}
+				if (daily_push_ups == null){
+					console.log("that");
+					daily_push_ups = [].push(result)
+				} else {
+					daily_push_ups.push(result)
+				}*/
+
+				// Performance
+				var push_ups = [1, 2, 3, 4, 5, 6, 7]; // Inputs
+				var time_delays = [65, 59, 80, 100, 160, 400, 800]; // Inputs
+
+				var historyData = {
+				labels: dates,
+				datasets: [
+						{
+							label: "History Chart",
+							fillColor: "rgba(220,220,220,0.2)",
+							strokeColor: "rgba(220,220,220,1)",
+							pointColor: "rgba(220,220,220,1)",
+							pointStrokeColor: "#fff",
+							pointHighlightFill: "#fff",
+							pointHighlightStroke: "rgba(220,220,220,1)",
+							data: daily_push_ups
+						}
+					]
+				};
+				var performanceData = {
+				labels: push_ups,
+				datasets: [
+						{
+							label: "Performance Chart",
+							fillColor: "rgba(220,220,220,0.2)",
+							strokeColor: "rgba(220,220,220,1)",
+							pointColor: "rgba(220,220,220,1)",
+							pointStrokeColor: "#fff",
+							pointHighlightFill: "#fff",
+							pointHighlightStroke: "rgba(220,220,220,1)",
+							data: time_delays
+						}
+					]
+				};
+
+				// Get context with jQuery - using jQuery's .get() method.
+				var ctx_h = document.getElementById("historyChart").getContext("2d");
+				// This will get the first returned node in the jQuery collection.
+				var myLineChart_h = new Chart(ctx_h).Line(historyData, {});
+
+				var ctx_p = document.getElementById("performanceChart").getContext("2d");
+				// This will get the first returned node in the jQuery collection.
+				var myLineChart_p = new Chart(ctx_p).Line(performanceData, {});
+			}
+		</script>
+	</body>
+</html>
